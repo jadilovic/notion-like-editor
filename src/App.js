@@ -90,7 +90,7 @@ function App() {
 	return (
 		<div className="app">
 			<header>
-				<h1>h1</h1>
+				<h1>Helpjuice Editor</h1>
 				<h3>Frontend developer test project</h3>
 			</header>
 			<main>

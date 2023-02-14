@@ -4,6 +4,10 @@
 	margin: 80px auto;
 }
 
+h1 {
+	text-align: center;
+}
+
 input {
 	width: 100%;
 	border: none;
