@@ -10,7 +10,9 @@ function App() {
 	const [isComponentsDropdownOpen, setIsComponentsDropdownOpen] =
 		useState(false);
 	const [componentPlaceholder, setComponentPlaceholder] = useState('');
+
 	const [components, setComponents] = useState([...componentStyles]);
+
 	const inputRef = useRef([]);
 	const activeElementId = useRef(null);
 
@@ -128,6 +130,7 @@ function App() {
 									onChange={handleOnChange}
 									onKeyDown={handleOnKeyDown}
 									placeholder={componentPlaceholder}
+									data-testid="text-input"
 								/>
 							</div>
 						);
