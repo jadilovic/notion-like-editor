@@ -5,6 +5,7 @@ import './App.css';
 
 function App() {
 	const [texts, setTexts] = useState({});
+	const [value, setValue] = useState('');
 	const [changeFocus, setChangeFocus] = useState(false);
 	const [isSelection, setIsSelection] = useState(false);
 	const inputRef = useRef([]);
@@ -30,6 +31,7 @@ function App() {
 
 	const handleOnChange = (e) => {
 		const inputValue = e.target.value;
+		setValue(inputValue);
 		if (inputValue.startsWith('/')) {
 			setIsSelection(true);
 			if (inputValue.length > 1) {
@@ -41,6 +43,7 @@ function App() {
 			texts[e.target.name].value = inputValue;
 			setTexts({ ...texts });
 		} else {
+			console.log('test');
 			delete texts[e.target.name];
 			if (JSON.stringify(texts) === '{}') {
 				texts[nanoid()] = { component: components['p'], value: '' };
@@ -54,12 +57,24 @@ function App() {
 	};
 
 	const handleOnKeyDown = (event) => {
-		if (event.key === 'Enter') {
+		if (event.key === 'Enter' && !event.target.value.startsWith('/')) {
 			texts[nanoid()] = {
 				component: components['p'],
 				value: '',
 			};
 			setTexts({ ...texts });
+			setChangeFocus(!changeFocus);
+		}
+		if (
+			event.key === 'Backspace' &&
+			value.length < 1 &&
+			Object.keys(texts).length > 1
+		) {
+			console.log('test backspace');
+			delete texts[activeElementId.current];
+			setTexts({
+				...texts,
+			});
 			setChangeFocus(!changeFocus);
 		}
 	};
@@ -69,9 +84,8 @@ function App() {
 		texts[activeElementId.current].value = '';
 		setTexts({ ...texts });
 		setIsSelection(false);
+		setChangeFocus(!changeFocus);
 	};
-
-	console.log(texts);
 
 	return (
 		<div className="app">
