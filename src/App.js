@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { components } from './componentStyles';
+import { componentStyles } from './componentStyles';
 import { nanoid } from 'nanoid';
 import './App.css';
+import ComponentsDropdown from './components/ComponentsDropdown';
 
 function App() {
 	const [texts, setTexts] = useState({});
-	const [value, setValue] = useState('');
 	const [changeFocus, setChangeFocus] = useState(false);
-	const [isSelection, setIsSelection] = useState(false);
+	const [isComponentsDropdownOpen, setIsComponentsDropdownOpen] =
+		useState(false);
+	const [componentPlaceholder, setComponentPlaceholder] = useState('');
+	const [components, setComponents] = useState([...componentStyles]);
 	const inputRef = useRef([]);
 	const activeElementId = useRef(null);
 
@@ -16,10 +19,11 @@ function App() {
 	useEffect(() => {
 		setTexts({
 			[nanoid()]: {
-				component: components['p'],
+				component: components[0],
 				value: '',
 			},
 		});
+		setComponentPlaceholder('Type / for blocks, @ to link docs or people');
 		setChangeFocus(!changeFocus);
 	}, []);
 
@@ -29,61 +33,70 @@ function App() {
 		}
 	}, [changeFocus]);
 
-	const handleOnChange = (e) => {
-		const inputValue = e.target.value;
-		setValue(inputValue);
-		if (inputValue.startsWith('/')) {
-			setIsSelection(true);
-			if (inputValue.length > 1) {
-				const number = inputValue.slice(1);
-				console.log(number);
-			}
+	const searchComponents = (searchValue) => {
+		const componentId = searchValue.slice(1);
+		const filteredComponentStyles = components.filter((component) =>
+			component.id.includes(componentId)
+		);
+		if (filteredComponentStyles.length > 0) {
+			setComponents([...filteredComponentStyles]);
+		} else {
+			setComponents([...componentStyles]);
 		}
-		if (inputValue) {
-			texts[e.target.name].value = inputValue;
+	};
+
+	const removeTextInput = (textName) => {
+		delete texts[textName];
+		if (JSON.stringify(texts) === '{}') {
+			texts[nanoid()] = { component: components[0], value: '' };
+		}
+		setTexts({
+			...texts,
+		});
+		setChangeFocus(!changeFocus);
+		setComponentPlaceholder('Type / for blocks, @ to link docs or people');
+	};
+
+	const handleOnChange = (e) => {
+		const value = e.target.value;
+		if (value.startsWith('/')) {
+			setComponents([...componentStyles]);
+			setIsComponentsDropdownOpen(true);
+			if (value.length > 1) {
+				searchComponents(value);
+			}
+		} else {
+			setIsComponentsDropdownOpen(false);
+		}
+
+		if (value) {
+			texts[e.target.name].value = value;
 			setTexts({ ...texts });
 		} else {
-			console.log('test');
-			delete texts[e.target.name];
-			if (JSON.stringify(texts) === '{}') {
-				texts[nanoid()] = { component: components['p'], value: '' };
-				setChangeFocus(!changeFocus);
-			}
-			setTexts({
-				...texts,
-			});
-			setChangeFocus(!changeFocus);
+			removeTextInput(e.target.name);
 		}
 	};
 
 	const handleOnKeyDown = (event) => {
 		if (event.key === 'Enter' && !event.target.value.startsWith('/')) {
 			texts[nanoid()] = {
-				component: components['p'],
+				component: components[0],
 				value: '',
 			};
 			setTexts({ ...texts });
 			setChangeFocus(!changeFocus);
-		}
-		if (
-			event.key === 'Backspace' &&
-			value.length < 1 &&
-			Object.keys(texts).length > 1
-		) {
-			console.log('test backspace');
-			delete texts[activeElementId.current];
-			setTexts({
-				...texts,
-			});
-			setChangeFocus(!changeFocus);
+			setComponentPlaceholder('Type / for blocks, @ to link docs or people');
+			setComponents([...componentStyles]);
 		}
 	};
 
-	const handleComponentSelection = (componentKey) => {
-		texts[activeElementId.current].component = components[componentKey];
+	const handleComponentSelection = (componentIndex) => {
+		texts[activeElementId.current].component =
+			components[componentIndex].styles;
 		texts[activeElementId.current].value = '';
 		setTexts({ ...texts });
-		setIsSelection(false);
+		setIsComponentsDropdownOpen(false);
+		setComponentPlaceholder(components[componentIndex].name);
 		setChangeFocus(!changeFocus);
 	};
 
@@ -108,30 +121,27 @@ function App() {
 								<input
 									id={key}
 									ref={(el) => (inputRef.current[index] = el)}
-									style={texts[key].component.styles}
+									style={texts[key].component}
 									type="text"
 									name={key}
 									value={texts[key].value}
 									onChange={handleOnChange}
 									onKeyDown={handleOnKeyDown}
-									placeholder="Type / for blocks, @ to link docs or people"
+									placeholder={componentPlaceholder}
 								/>
 							</div>
 						);
 					})}
-					{isSelection && (
+					{isComponentsDropdownOpen && (
 						<div className="drop-down-container">
-							{Object.keys(components).map((key) => {
-								return (
-									<div
-										key={key}
-										onClick={() => handleComponentSelection(key)}
-										className="drop-down-options"
-									>
-										{components[key].name}
-									</div>
-								);
-							})}
+							{components.map((component, index) => (
+								<ComponentsDropdown
+									key={component.id}
+									component={component}
+									index={index}
+									handleComponentSelection={handleComponentSelection}
+								/>
+							))}
 						</div>
 					)}
 				</section>
