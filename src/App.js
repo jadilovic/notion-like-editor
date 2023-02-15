@@ -36,15 +36,11 @@ function App() {
 	}, [changeFocus]);
 
 	const searchComponents = (searchValue) => {
-		const componentId = searchValue.slice(1);
+		const componentName = searchValue.slice(1).toLowerCase();
 		const filteredComponentStyles = components.filter((component) =>
-			component.id.includes(componentId)
+			component.name.toLowerCase().includes(componentName)
 		);
-		if (filteredComponentStyles.length > 0) {
-			setComponents([...filteredComponentStyles]);
-		} else {
-			setComponents([...componentStyles]);
-		}
+		setComponents([...filteredComponentStyles]);
 	};
 
 	const removeTextInput = (textName) => {
@@ -59,8 +55,16 @@ function App() {
 		setComponentPlaceholder('Type / for blocks, @ to link docs or people');
 	};
 
-	const handleOnChange = (e) => {
-		const value = e.target.value;
+	const createInputField = () => {
+		texts[nanoid()] = {
+			component: components[0],
+			value: '',
+		};
+		setTexts({ ...texts });
+	};
+
+	const handleOnChange = (event) => {
+		const value = event.target.value;
 		if (value.startsWith('/')) {
 			setComponents([...componentStyles]);
 			setIsComponentsDropdownOpen(true);
@@ -72,23 +76,28 @@ function App() {
 		}
 
 		if (value) {
-			texts[e.target.name].value = value;
+			texts[event.target.name].value = value;
 			setTexts({ ...texts });
 		} else {
-			removeTextInput(e.target.name);
+			removeTextInput(event.target.name);
 		}
 	};
 
 	const handleOnKeyDown = (event) => {
 		if (event.key === 'Enter' && !event.target.value.startsWith('/')) {
-			texts[nanoid()] = {
-				component: components[0],
-				value: '',
-			};
-			setTexts({ ...texts });
+			createInputField();
 			setChangeFocus(!changeFocus);
 			setComponentPlaceholder('Type / for blocks, @ to link docs or people');
 			setComponents([...componentStyles]);
+		}
+		if (event.key === 'Enter' && event.target.value.startsWith('/')) {
+			if (components.length > 0) {
+				handleComponentSelection(0);
+			}
+		}
+		if (event.key === 'Backspace' && !event.target.value) {
+			event.preventDefault();
+			removeTextInput(event.target.name);
 		}
 	};
 
@@ -136,16 +145,10 @@ function App() {
 						);
 					})}
 					{isComponentsDropdownOpen && (
-						<div className="drop-down-container">
-							{components.map((component, index) => (
-								<ComponentsDropdown
-									key={component.id}
-									component={component}
-									index={index}
-									handleComponentSelection={handleComponentSelection}
-								/>
-							))}
-						</div>
+						<ComponentsDropdown
+							components={components}
+							handleComponentSelection={handleComponentSelection}
+						/>
 					)}
 				</section>
 			</main>
